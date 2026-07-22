@@ -1,5 +1,5 @@
 -- =============================================
--- Chameleon Advanced - Auto Paint + ESP Fixed
+-- Chameleon - Auto Paint FIXED + ESP
 -- =============================================
 
 local Players = game:GetService("Players")
@@ -53,33 +53,34 @@ local function createButton(text, y, callback)
     return btn
 end
 
--- Paint System
+-- Improved Auto Paint
 local function getBestColor()
     local ray = workspace.CurrentCamera:ScreenPointToRay(mouse.X, mouse.Y)
-    local result = workspace:Raycast(ray.Origin, ray.Direction * 500)
+    local result = workspace:Raycast(ray.Origin, ray.Direction * 600)
     return result and result.Instance and result.Instance.Color or Color3.new(1,1,1)
 end
 
 local function paintCharacter()
     local char = player.Character
     if not char then return end
-    
+
     local targetColor = bestMatch and getBestColor() or (mouse.Target and mouse.Target.Color)
     if not targetColor then return end
 
+    -- Paint ALL visual parts more aggressively
     for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-            part.Color = targetColor
-            part.Material = Enum.Material.SmoothPlastic
+        if part:IsA("BasePart") and not part:FindFirstChild("Mesh") then
+            if part.Name ~= "HumanoidRootPart" and part.Transparency < 1 then
+                part.Color = targetColor
+                part.Material = Enum.Material.SmoothPlastic
+            end
         end
     end
 end
 
 -- ESP
 local function clearESP()
-    for _, hl in pairs(highlights) do
-        if hl and hl.Parent then hl:Destroy() end
-    end
+    for _, hl in pairs(highlights) do hl:Destroy() end
     highlights = {}
 end
 
@@ -119,15 +120,11 @@ local espBtn = createButton("ESP Seekers: OFF", 170, function(btn)
     toggleESP(btn)
 end)
 
-local tauntBtn = createButton("Taunt Spam: OFF", 225, function(btn)
-    btn.Text = "Taunt Spam: Coming Soon"
-end)
-
--- Main Paint Loop
-RunService.RenderStepped:Connect(function()
+-- Main Loop - This is the key fix for Auto Paint
+RunService.Heartbeat:Connect(function()
     if autoPaint and player.Character then
         paintCharacter()
     end
 end)
 
-print("✅ Script Loaded - Auto Paint & ESP Fixed")
+print("✅ Auto Paint should now work better!")
