@@ -1,6 +1,4 @@
--- =============================================
--- Chameleon Final Stable Version
--- =============================================
+-- Chameleon Script with Strong ESP (gumanba style)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -13,7 +11,7 @@ local bestMatch = true
 local espEnabled = false
 local highlights = {}
 
-print("🦎 Chameleon Script vFinal Loading...")
+print("🦎 Loading Chameleon with gumanba-style ESP...")
 
 -- GUI
 local screenGui = Instance.new("ScreenGui")
@@ -22,9 +20,9 @@ screenGui.DisplayOrder = 999
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 340, 0, 380)
-frame.Position = UDim2.new(0, 50, 0.25, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Size = UDim2.new(0, 340, 0, 400)
+frame.Position = UDim2.new(0, 40, 0.25, 0)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
@@ -32,14 +30,14 @@ frame.Parent = screenGui
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 50)
-title.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-title.Text = "🦎 Chameleon"
+title.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+title.Text = "🦎 Chameleon (gumanba ESP)"
 title.TextColor3 = Color3.new(1,1,1)
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
-local function createButton(text, y)
+local function createButton(text, y, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0.9, 0, 0, 50)
     btn.Position = UDim2.new(0.05, 0, 0, y)
@@ -49,6 +47,7 @@ local function createButton(text, y)
     btn.TextScaled = true
     btn.Font = Enum.Font.Gotham
     btn.Parent = frame
+    btn.MouseButton1Click:Connect(callback)
     return btn
 end
 
@@ -56,7 +55,7 @@ end
 local function paintCharacter()
     local char = player.Character
     if not char then return end
-    local color = bestMatch and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(255, 100, 100)
+    local color = bestMatch and getBestColor() or Color3.fromRGB(255, 100, 100)
 
     for _, part in ipairs(char:GetDescendants()) do
         if part:IsA("BasePart") and part.Transparency < 0.9 then
@@ -65,20 +64,28 @@ local function paintCharacter()
     end
 end
 
--- ESP
+local function getBestColor()
+    local ray = workspace.CurrentCamera:ScreenPointToRay(mouse.X, mouse.Y)
+    local result = workspace:Raycast(ray.Origin, ray.Direction * 500)
+    return result and result.Instance and result.Instance.Color or Color3.new(1,1,1)
+end
+
+-- Strong ESP
 local function toggleESP()
     espEnabled = not espEnabled
-    print("ESP Toggled:", espEnabled)
+    print("ESP:", espEnabled)
 
     if espEnabled then
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= player and plr.Character then
-                local hl = Instance.new("Highlight")
-                hl.Adornee = plr.Character
-                hl.FillColor = Color3.fromRGB(255, 50, 50)
-                hl.OutlineColor = Color3.fromRGB(255, 200, 200)
-                hl.Parent = plr.Character
-                highlights[plr] = hl
+                local highlight = Instance.new("Highlight")
+                highlight.Adornee = plr.Character
+                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.4
+                highlight.OutlineTransparency = 0
+                highlight.Parent = plr.Character
+                highlights[plr] = highlight
             end
         end
     else
@@ -88,17 +95,17 @@ local function toggleESP()
 end
 
 -- Buttons
-createButton("Toggle Auto Paint", 60).MouseButton1Click:Connect(function()
+createButton("Toggle Auto Paint", 60, function()
     autoPaint = not autoPaint
     print("Auto Paint:", autoPaint)
 end)
 
-createButton("Toggle Best Match", 120).MouseButton1Click:Connect(function()
+createButton("Toggle Best Match", 120, function()
     bestMatch = not bestMatch
     print("Best Match:", bestMatch)
 end)
 
-createButton("Toggle ESP", 180).MouseButton1Click:Connect(toggleESP)
+createButton("Toggle ESP", 180, toggleESP)
 
 -- Loop
 RunService.Heartbeat:Connect(function()
@@ -107,4 +114,4 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
-print("✅ Loaded! Use F9 console to see status.")
+print("✅ Loaded!")
