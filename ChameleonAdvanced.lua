@@ -1,5 +1,5 @@
 -- =============================================
--- Chameleon Script with Improved ESP (from gumanba)
+-- Chameleon Advanced - Auto Paint + ESP Fixed
 -- =============================================
 
 local Players = game:GetService("Players")
@@ -53,7 +53,7 @@ local function createButton(text, y, callback)
     return btn
 end
 
--- Paint
+-- Paint System
 local function getBestColor()
     local ray = workspace.CurrentCamera:ScreenPointToRay(mouse.X, mouse.Y)
     local result = workspace:Raycast(ray.Origin, ray.Direction * 500)
@@ -63,69 +63,71 @@ end
 local function paintCharacter()
     local char = player.Character
     if not char then return end
-    local color = bestMatch and getBestColor() or (mouse.Target and mouse.Target.Color)
-    if not color then return end
+    
+    local targetColor = bestMatch and getBestColor() or (mouse.Target and mouse.Target.Color)
+    if not targetColor then return end
 
     for _, part in ipairs(char:GetDescendants()) do
         if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-            part.Color = color
+            part.Color = targetColor
+            part.Material = Enum.Material.SmoothPlastic
         end
     end
 end
 
--- ESP (Improved from the other script style)
+-- ESP
 local function clearESP()
-    for _, v in pairs(highlights) do v:Destroy() end
+    for _, hl in pairs(highlights) do
+        if hl and hl.Parent then hl:Destroy() end
+    end
     highlights = {}
 end
 
-local function toggleESP()
+local function toggleESP(btn)
     espEnabled = not espEnabled
-    if not espEnabled then
-        clearESP()
-        return
-    end
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local highlight = Instance.new("Highlight")
-            highlight.Adornee = plr.Character
-            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-            highlight.OutlineColor = Color3.fromRGB(255, 100, 100)
-            highlight.FillTransparency = 0.5
-            highlight.OutlineTransparency = 0
-            highlight.Parent = plr.Character
-            highlights[plr] = highlight
+    btn.Text = "ESP Seekers: " .. (espEnabled and "ON" or "OFF")
+    
+    if espEnabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= player and plr.Character then
+                local hl = Instance.new("Highlight")
+                hl.Adornee = plr.Character
+                hl.FillColor = Color3.fromRGB(255, 60, 60)
+                hl.OutlineColor = Color3.fromRGB(255, 150, 150)
+                hl.FillTransparency = 0.5
+                hl.Parent = plr.Character
+                highlights[plr] = hl
+            end
         end
+    else
+        clearESP()
     end
 end
 
 -- Buttons
-createButton("Auto Paint: OFF", 60, function(btn)
+local autoBtn = createButton("Auto Paint: OFF", 60, function(btn)
     autoPaint = not autoPaint
     btn.Text = "Auto Paint: " .. (autoPaint and "ON" or "OFF")
 end)
 
-createButton("Best Match: ON", 115, function(btn)
+local matchBtn = createButton("Best Match: ON", 115, function(btn)
     bestMatch = not bestMatch
     btn.Text = "Best Match: " .. (bestMatch and "ON" or "OFF")
 end)
 
-createButton("ESP Seekers: OFF", 170, function(btn)
-    toggleESP()
-    btn.Text = "ESP Seekers: " .. (espEnabled and "ON" or "OFF")
+local espBtn = createButton("ESP Seekers: OFF", 170, function(btn)
+    toggleESP(btn)
 end)
 
-createButton("Taunt Spam: OFF", 225, function(btn)
-    print("Taunt Spam - Not fully implemented in this version")
-    -- Add your taunt logic here if needed
+local tauntBtn = createButton("Taunt Spam: OFF", 225, function(btn)
+    btn.Text = "Taunt Spam: Coming Soon"
 end)
 
--- Main Loop
+-- Main Paint Loop
 RunService.RenderStepped:Connect(function()
-    if autoPaint then
+    if autoPaint and player.Character then
         paintCharacter()
     end
 end)
 
-print("✅ Loaded with ESP from gumanba script style!")
+print("✅ Script Loaded - Auto Paint & ESP Fixed")
