@@ -1,5 +1,5 @@
 -- =============================================
--- Chameleon Advanced Script - ESP Fixed
+-- Chameleon Advanced - ESP Fully Fixed
 -- =============================================
 
 local Players = game:GetService("Players")
@@ -16,22 +16,24 @@ local tauntSpamEnabled = false
 local tauntConnection = nil
 local highlights = {}
 
--- GUI (same clean look)
+-- GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ChameleonGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 400)
-frame.Position = UDim2.new(0, 20, 0.4, 0)
+frame.Size = UDim2.new(0, 320, 0, 420)
+frame.Position = UDim2.new(0, 20, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 frame.Parent = screenGui
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 50)
-title.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+title.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 title.Text = "🦎 Chameleon Advanced"
 title.TextColor3 = Color3.new(1,1,1)
 title.TextScaled = true
@@ -40,9 +42,10 @@ title.Parent = frame
 
 local function createButton(text, yOffset, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 40)
+    btn.Size = UDim2.new(0.9, 0, 0, 45)
     btn.Position = UDim2.new(0.05, 0, 0, yOffset)
-    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.AutoButtonColor = true
     btn.Text = text
     btn.TextColor3 = Color3.new(1,1,1)
     btn.TextScaled = true
@@ -52,7 +55,7 @@ local function createButton(text, yOffset, callback)
     return btn
 end
 
--- Paint Functions
+-- Paint
 local function getBestColor()
     local ray = workspace.CurrentCamera:ScreenPointToRay(mouse.X, mouse.Y)
     local result = workspace:Raycast(ray.Origin, ray.Direction * 400)
@@ -73,22 +76,24 @@ local function paintCharacter()
     end
 end
 
--- Working ESP
-local function updateESP()
+-- ESP
+local function clearHighlights()
     for _, hl in pairs(highlights) do
-        if hl.Parent then hl:Destroy() end
+        if hl and hl.Parent then hl:Destroy() end
     end
     highlights = {}
+end
 
+local function updateESP()
+    clearHighlights()
     if not espEnabled then return end
 
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local highlight = Instance.new("Highlight")
-            highlight.Name = "ChameleonESP"
-            highlight.FillColor = Color3.fromRGB(255, 50, 50)
-            highlight.OutlineColor = Color3.fromRGB(255, 100, 100)
-            highlight.FillTransparency = 0.5
+            highlight.FillColor = Color3.fromRGB(255, 60, 60)
+            highlight.OutlineColor = Color3.fromRGB(255, 150, 150)
+            highlight.FillTransparency = 0.4
             highlight.OutlineTransparency = 0
             highlight.Adornee = plr.Character
             highlight.Parent = plr.Character
@@ -97,21 +102,20 @@ local function updateESP()
     end
 end
 
--- Taunt Spam (unchanged)
+-- Taunt Spam
 local function startTauntSpam()
     if tauntConnection then tauntConnection:Disconnect() end
     tauntConnection = RunService.Heartbeat:Connect(function()
         if not tauntSpamEnabled then return end
         pcall(function()
-            local remotes = ReplicatedStorage:GetDescendants()
-            for _, v in ipairs(remotes) do
+            for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
                 if v:IsA("RemoteEvent") and (v.Name:lower():find("taunt") or v.Name:lower():find("emote")) then
-                    v:FireServer(math.random(1,6))
+                    v:FireServer(math.random(1,8))
                     break
                 end
             end
         end)
-        wait(1.6)
+        wait(1.5)
     end)
 end
 
@@ -119,38 +123,37 @@ local function stopTauntSpam()
     if tauntConnection then tauntConnection:Disconnect() tauntConnection = nil end
 end
 
--- Buttons
-createButton("Auto Paint: OFF", 60, function(btn)
-    autoPaint = not autoPaint
-    btn.Text = "Auto Paint: " .. (autoPaint and "ON" or "OFF")
-end)
-
-createButton("Best Color Match: ON", 110, function(btn)
-    bestMatch = not bestMatch
-    btn.Text = "Best Color Match: " .. (bestMatch and "ON" or "OFF")
-end)
-
-createButton("ESP Seekers: OFF", 160, function(btn)
+-- Buttons with proper state update
+local espBtn = createButton("ESP Seekers: OFF", 70, function()
     espEnabled = not espEnabled
-    btn.Text = "ESP Seekers: " .. (espEnabled and "ON" or "OFF")
+    espBtn.Text = "ESP Seekers: " .. (espEnabled and "ON" or "OFF")
     updateESP()
 end)
 
-createButton("Taunt Spam: OFF", 210, function(btn)
+local autoBtn = createButton("Auto Paint: OFF", 125, function()
+    autoPaint = not autoPaint
+    autoBtn.Text = "Auto Paint: " .. (autoPaint and "ON" or "OFF")
+end)
+
+local matchBtn = createButton("Best Color Match: ON", 180, function()
+    bestMatch = not bestMatch
+    matchBtn.Text = "Best Color Match: " .. (bestMatch and "ON" or "OFF")
+end)
+
+local tauntBtn = createButton("Taunt Spam: OFF", 235, function()
     tauntSpamEnabled = not tauntSpamEnabled
-    btn.Text = "Taunt Spam: " .. (tauntSpamEnabled and "ON" or "OFF")
+    tauntBtn.Text = "Taunt Spam: " .. (tauntSpamEnabled and "ON" or "OFF")
     if tauntSpamEnabled then startTauntSpam() else stopTauntSpam() end
 end)
 
--- Update ESP when players join/leave
+-- Connections
 Players.PlayerAdded:Connect(updateESP)
-Players.PlayerRemoving:Connect(updateESP)
+Players.PlayerRemoving:Connect(function() wait(1) updateESP() end)
 
--- Main Loop
 RunService.RenderStepped:Connect(function()
     if autoPaint then
         paintCharacter()
     end
 end)
 
-print("✅ Chameleon Advanced Script Loaded! (ESP Fixed)")
+print("✅ Chameleon Script Loaded - ESP Should Now Work!")
